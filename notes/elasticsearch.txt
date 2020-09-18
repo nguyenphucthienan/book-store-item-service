@@ -1,0 +1,26 @@
+docker run -d --name elasticsearch -p 9200:9200 -p 9300:9300 -e "discovery.type=single-node" -v D:/Workspace/DATA/elasticsearch:/usr/share/elasticsearch/data --rm elasticsearch:7.9.1
+
+curl --location --request PUT 'http://localhost:9200/items' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "settings": {
+        "index": {
+            "number_of_shards": 4,
+            "number_of_replicas": 2
+        }
+    }
+}'
+
+curl --location --request PUT 'http://localhost:9200/_cluster/settings' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+  "persistent" : {
+        "cluster.routing.allocation.disk.threshold_enabled" : false
+    }
+}'
+
+curl --location --request PUT 'http://localhost:9200/_all/_settings' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+  "index.blocks.read_only_allow_delete": null
+}'

@@ -2,6 +2,7 @@ package application
 
 import (
 	"github.com/gorilla/mux"
+	"github.com/nguyenphucthienan/book-store-item-service/client/elasticsearch"
 	"net/http"
 	"time"
 )
@@ -11,6 +12,7 @@ var (
 )
 
 func Start() {
+	elasticsearch.Init()
 	mapUrls()
 
 	server := &http.Server{

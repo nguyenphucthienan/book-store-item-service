@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"github.com/gorilla/mux"
 	"github.com/nguyenphucthienan/book-store-item-service/domain/item"
+	"github.com/nguyenphucthienan/book-store-item-service/domain/query"
 	"github.com/nguyenphucthienan/book-store-item-service/service"
 	"github.com/nguyenphucthienan/book-store-item-service/utils/http_utils"
 	"github.com/nguyenphucthienan/book-store-oauth-go/oauth"
@@ -26,6 +27,13 @@ type itemController struct{}
 func (c *itemController) Create(w http.ResponseWriter, r *http.Request) {
 	if err := oauth.AuthenticateRequest(r); err != nil {
 		http_utils.RespondError(w, err)
+		return
+	}
+
+	caller := oauth.GetCallerId(r)
+	if caller == 0 {
+		authErr := errors.NewUnauthorizedError("Invalid access token")
+		http_utils.RespondError(w, authErr)
 		return
 	}
 
@@ -55,9 +63,34 @@ func (c *itemController) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *itemController) Get(w http.ResponseWriter, r *http.Request) {
-	_, err := service.ItemService.Get(mux.Vars(r)["id"])
+	returnedItem, err := service.ItemService.Get(mux.Vars(r)["id"])
 	if err != nil {
 		http_utils.RespondError(w, err)
 		return
 	}
+	http_utils.RespondJson(w, http.StatusOK, returnedItem)
+}
+
+func (c *itemController) Search(w http.ResponseWriter, r *http.Request) {
+	requestBody, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		apiErr := errors.NewBadRequestError("Invalid json body")
+		http_utils.RespondError(w, apiErr)
+		return
+	}
+	defer r.Body.Close()
+
+	var searchQuery query.EsQuery
+	if err := json.Unmarshal(requestBody, &searchQuery); err != nil {
+		apiErr := errors.NewBadRequestError("Invalid json body")
+		http_utils.RespondError(w, apiErr)
+		return
+	}
+
+	items, searchErr := service.ItemService.Search(searchQuery)
+	if searchErr != nil {
+		http_utils.RespondError(w, searchErr)
+		return
+	}
+	http_utils.RespondJson(w, http.StatusOK, items)
 }
