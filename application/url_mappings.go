@@ -12,4 +12,5 @@ const (
 func mapUrls() {
 	router.HandleFunc(apiPrefix+"/items", controller.ItemController.Create).Methods(http.MethodPost)
 	router.HandleFunc(apiPrefix+"/items/{id}", controller.ItemController.Get).Methods(http.MethodGet)
+	router.HandleFunc(apiPrefix+"/items/search", controller.ItemController.Search).Methods(http.MethodPost)
 }
